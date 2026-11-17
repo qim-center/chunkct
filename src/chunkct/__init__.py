@@ -11,8 +11,12 @@ except ImportError as e:  # pragma: no cover - depends on environment
         "or use the pixi environment shipped with chunkct (`pixi install`)."
     ) from e
 
-from chunkct.recon import ChunkedCT
-from chunkct.sources import (
+from chunkct._compat import limit_cil_threads_to_allowed_cpus
+
+limit_cil_threads_to_allowed_cpus()
+
+from chunkct.recon import ChunkedCT  # noqa: E402
+from chunkct.sources import (  # noqa: E402
     NikonZeissTiffProjectionSource,
     PickleTiffProjectionSource,
     ProjectionSource,
