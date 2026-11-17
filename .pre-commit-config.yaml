@@ -1,0 +1,27 @@
+# Checks that prek (https://github.com/j178/prek) runs on the staged files at every `git commit`.
+# Set up once per clone:   pixi run -e cpu prek install
+# Run by hand on all files: pixi run -e cpu prek run --all-files
+# Notebook outputs are not handled here but by the nbstripout git filter (see README).
+repos:
+  # ruff from the pixi environment, so the version matches `pixi run lint`.
+  - repo: local
+    hooks:
+      - id: ruff-check
+        name: ruff check
+        entry: pixi run -e cpu ruff check --fix
+        language: system
+        types_or: [python, jupyter]
+      - id: ruff-format
+        name: ruff format
+        entry: pixi run -e cpu ruff format
+        language: system
+        types_or: [python, jupyter]
+  # Small file checks built into prek (nothing to download).
+  - repo: builtin
+    hooks:
+      - id: check-toml
+      - id: check-yaml
+      - id: end-of-file-fixer
+      - id: trailing-whitespace
+      - id: check-added-large-files
+        args: [--maxkb=1000]

@@ -1,0 +1,13 @@
+__pycache__/
+*.py[cod]
+.pixi/
+*.egg-info/
+dist/
+build/
+.pytest_cache/
+.ruff_cache/
+.ipynb_checkpoints/
+# Generated output (notebook runs, HPC job logs), at any depth.
+# Exception: out/bjobs/.gitkeep is committed (added once with `git add -f`) so that out/bjobs/
+# exists in every clone; LSF drops a job's log files if their folder doesn't exist.
+out/
