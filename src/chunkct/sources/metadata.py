@@ -21,12 +21,27 @@ def create_reader(file_name, roi=None):
         return DataReader(file_name=file_name, roi=roi)
 
 
+def read_nikon_white_level(xtekct_path) -> float:
+    """Return ``WhiteLevel`` from a Nikon .xtekct file: the detector value for no attenuation."""
+    with open(xtekct_path, errors="replace") as f:
+        for line in f:
+            line = line.strip()
+            if line.startswith("WhiteLevel="):
+                return float(line.split("=", 1)[1])
+    raise ValueError(f"No WhiteLevel entry found in {xtekct_path}")
+
+
 class NikonZeissTiffProjectionSource(TiffProjectionSource):
     """
     TIFF projection source whose geometries are loaded from Nikon or ZEISS
     metadata using CIL.
 
     Projection data are read from TIFF files, not through CIL's read method.
+
+    Normalisation to transmission (raw counts / I0):
+    - Nikon: divides by ``WhiteLevel`` from the .xtekct, like CIL's NikonDataReader.
+    - ZEISS: divides by 65535 (dtype maximum). CIL's ZEISSDataReader instead uses
+      reference (flat-field) images; not implemented here yet.
     """
 
     def __init__(
@@ -50,6 +65,9 @@ class NikonZeissTiffProjectionSource(TiffProjectionSource):
         reader = create_reader(str(self.config_path))
         self.ag = reader.get_geometry()
         self.ig = self.ag.get_ImageGeometry()
+
+        if self.config_path.suffix == ".xtekct":
+            self._normalization_constant = read_nikon_white_level(self.config_path)
 
     def get_geometries(self):
         return self.ag, self.ig
