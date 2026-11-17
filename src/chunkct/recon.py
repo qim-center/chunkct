@@ -274,31 +274,22 @@ class ChunkedCT:
         return recon_chunk
 
     def make_ig_chunk(self, chunk_coords):
+        """ImageGeometry of one volume block, at its place inside the full volume."""
         ig_chunk = self.ig.copy()
         for axis, dim_label in enumerate(["z", "y", "x"]):
-            chunk = chunk_coords[axis]
-            voxel_num = min(
-                self.recon_chunk_shape[axis],
-                self.ig.shape[axis] - chunk * self.recon_chunk_shape[axis],
-            )
-            setattr(ig_chunk, f"voxel_num_{dim_label}", voxel_num)
-            ig_voxel_num = getattr(self.ig, f"voxel_num_{dim_label}")
-            ig_chunk_voxel_num = getattr(ig_chunk, f"voxel_num_{dim_label}")
-            ig_chunk_voxel_size = getattr(ig_chunk, f"voxel_size_{dim_label}")
+            n_full = getattr(self.ig, f"voxel_num_{dim_label}")
+            voxel_size = getattr(self.ig, f"voxel_size_{dim_label}")
+            start = chunk_coords[axis] * self.recon_chunk_shape[axis]
+            n_chunk = min(self.recon_chunk_shape[axis], n_full - start)
 
-            # center is in 'world' coordinates, hence the scaling with voxel_size
-            initial_shift = (
-                -ig_voxel_num / 2 + self.recon_chunk_shape[axis] / 2
-            ) * ig_chunk_voxel_size
-            center = (
-                initial_shift
-                + (
-                    chunk * self.recon_chunk_shape[axis]
-                    - (self.recon_chunk_shape[axis] - ig_chunk_voxel_num) / 2
-                )
-                * ig_chunk_voxel_size
-            )
-            setattr(ig_chunk, f"center_{dim_label}", center)
+            # Centres are world coordinates. The block covers voxels [start, start + n_chunk)
+            # of the full volume, so its centre lies (start + n_chunk/2 - n_full/2) voxels
+            # from the full volume's centre.
+            full_centre = getattr(self.ig, f"center_{dim_label}")
+            centre = full_centre + (start + n_chunk / 2 - n_full / 2) * voxel_size
+
+            setattr(ig_chunk, f"voxel_num_{dim_label}", n_chunk)
+            setattr(ig_chunk, f"center_{dim_label}", centre)
 
         return ig_chunk
 

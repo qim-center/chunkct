@@ -100,6 +100,20 @@ def test_chunked_matches_cil_other_filters(tmp_path, sim_cone, filter):
     assert_close(chunked, cil_reference(ag, ig, proj, filter=filter))
 
 
+def test_off_centre_volume_matches_cil(tmp_path, sim_cone):
+    """A volume that is smaller than the default one and shifted away from the origin."""
+    ag, ig, proj = sim_cone
+    ig.voxel_num_z, ig.voxel_num_y, ig.voxel_num_x = 80, 96, 112
+    # shift by a whole number of voxels plus a fraction, differently on each axis
+    ig.center_z, ig.center_y, ig.center_x = (
+        3.5 * ig.voxel_size_z,
+        -6.25 * ig.voxel_size_y,
+        10.0 * ig.voxel_size_x,
+    )
+    chunked = run_chunked(ArraySource(proj, ag, ig), tmp_path, *CHUNKINGS["uneven"])
+    assert_close(chunked, cil_reference(ag, ig, proj))
+
+
 def test_tiff_source_matches_cil(tmp_path, sim_cone):
     """Same check, but reading TIFFs from disk via PickleTiffProjectionSource."""
     ag, ig, proj = sim_cone
