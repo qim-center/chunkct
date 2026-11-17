@@ -4,6 +4,7 @@ import math
 import os
 import shutil
 import time
+import warnings
 from multiprocessing import Pool
 from pathlib import Path
 
@@ -123,7 +124,20 @@ class ChunkedCT:
 
         self.proj_shape = self.ag.shape
 
-        self.angle_chunk_size = math.ceil(self.proj_shape[0] / self.angle_chunks)
+        n_angles = self.proj_shape[0]
+        if not 1 <= self.angle_chunks <= n_angles:
+            raise ValueError(f"angle_chunks must be between 1 and {n_angles}, got {angle_chunks}.")
+        self.angle_chunk_size = math.ceil(n_angles / self.angle_chunks)
+        # Chunks have equal size except a smaller last one, so fewer chunks than requested can
+        # be enough: 30 angles in 7 chunks gives size 5, and 6 chunks of 5 already cover all 30.
+        self.angle_chunks = math.ceil(n_angles / self.angle_chunk_size)
+        if self.angle_chunks != angle_chunks:
+            warnings.warn(
+                f"{n_angles} angles in chunks of {self.angle_chunk_size} need only "
+                f"{self.angle_chunks} angle chunks; using {self.angle_chunks} instead of "
+                f"{angle_chunks}.",
+                stacklevel=2,
+            )
 
     def get_vol_chunk_slices(self, chunk_coords):
         slices = []
