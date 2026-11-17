@@ -252,6 +252,11 @@ class ChunkedCT:
         data_chunk.reorder(order="tigre")
         recon_chunk = FDK(data_chunk, image_geometry=ig, filter=self.filter).run(verbose=0)
 
+        # CIL's FDK weights by 2*pi / (number of projections it is given), i.e. it treats
+        # this chunk as if it were a complete scan. Rescale so the chunk contributes its
+        # share of the full scan; the sum over chunks then equals the unchunked FDK.
+        recon_array = recon_chunk.as_array()
+        recon_array *= np.float32((end - start) / self.ag.shape[0])
         return recon_chunk
 
     def make_ig_chunk(self, chunk_coords):
