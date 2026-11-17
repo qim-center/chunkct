@@ -1,0 +1,17 @@
+#!/bin/sh
+# Run the GPU tests on a DTU HPC GPU node.
+# Submit from the repository root with:  pixi run hpc-test-gpu
+#BSUB -J chunkct_gpu_tests
+#BSUB -q gpuv100
+#BSUB -n 4
+#BSUB -R "span[hosts=1]"
+#BSUB -R "rusage[mem=4GB]"
+#BSUB -W 0:10
+#BSUB -gpu "num=1:mode=exclusive_process"
+#BSUB -o out/bjobs/gpu_tests_%J.out
+#BSUB -e out/bjobs/gpu_tests_%J.err
+
+echo "Host: $HOSTNAME"
+nvidia-smi
+
+pixi run test-gpu
